@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Cloud Posture Scanner</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<h1>Cloud Posture Scanner Dashboard</h1>
+
+<button onclick="runScan()">Run Security Scan</button>
+
+<h2>EC2 Instances</h2>
+
+<table id="instancesTable">
+  <thead>
+    <tr>
+      <th>Instance ID</th>
+      <th>Type</th>
+      <th>Public IP</th>
+      <th>Security Groups</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+
+<h2>S3 Buckets</h2>
+
+<table id="bucketsTable">
+  <thead>
+    <tr>
+      <th>Bucket Name</th>
+      <th>Created At</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+
+<h2>CIS Security Results</h2>
+
+<table id="cisTable">
+  <thead>
+    <tr>
+      <th>Resource</th>
+      <th>Check</th>
+      <th>Status</th>
+      <th>Evidence</th>
+      <th>Timestamp</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script src="app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,43 @@
+# Cloud Posture Scanner
+
+## Overview
+A serverless security scanner that discovers AWS resources and performs CIS-style security checks.
+
+## Architecture
+Frontend dashboard → API Gateway → Lambda functions → AWS APIs → DynamoDB.
+
+## Features
+- Discover EC2 instances
+- Discover S3 buckets
+- Run CIS-style security checks
+- Store scan results in DynamoDB
+- Web dashboard visualization
+
+## API Endpoints
+
+GET /instances  
+Returns discovered EC2 instances.
+
+GET /buckets  
+Returns discovered S3 buckets.
+
+GET /cis-results  
+Returns stored CIS scan results.
+
+POST /scan  
+Triggers a new CIS security scan.
+
+## Deployment Steps
+
+1. Create DynamoDB table `scan_results`
+2. Deploy Lambda functions
+3. Configure API Gateway routes
+4. Enable CORS
+5. Open `frontend/index.html`
+
+## Demo
+
+Dashboard displays:
+- EC2 instances
+- S3 buckets
+- CIS security results
