@@ -1,43 +1,113 @@
 # Cloud Posture Scanner
 
 ## Overview
-A serverless security scanner that discovers AWS resources and performs CIS-style security checks.
+A serverless AWS security scanner that discovers cloud resources and performs CIS Benchmark-style security checks. Built with AWS Lambda, API Gateway, and DynamoDB — no servers to manage.
 
 ## Architecture
-Frontend dashboard → API Gateway → Lambda functions → AWS APIs → DynamoDB.
+```
+Browser (Dashboard)
+    ↓
+API Gateway (REST API)
+    ↓
+Lambda Functions (Node.js ESM)
+    ↓
+AWS APIs (EC2, S3, IAM, CloudTrail)
+    ↓
+DynamoDB (scan_results table)
+```
 
-## Features
-- Discover EC2 instances
-- Discover S3 buckets
-- Run CIS-style security checks
-- Store scan results in DynamoDB
-- Web dashboard visualization
+## Security Checks (CIS Benchmark)
+
+The scanner performs the following security checks:
+
+- **S3 Public Access** — Checks S3 buckets for public access configurations. Public buckets expose data to the internet, which can lead to unauthorized data access and breaches.
+
+- **S3 Encryption** — Verifies that S3 buckets have encryption enabled. Unencrypted data is readable if accessed, putting sensitive information at risk.
+
+- **S3 Versioning** — Ensures S3 buckets have versioning enabled. Versioning enables recovery from accidental deletes and provides data protection.
+
+- **IAM Root Account MFA** — Validates that the AWS root account has multi-factor authentication enabled. Root account without MFA is a critical security risk as it has unrestricted access.
+
+- **CloudTrail Enabled** — Checks if AWS CloudTrail is enabled for the account. Without CloudTrail there is no audit log of API calls and account activity.
+
+- **Open SSH/RDP to Internet** — Scans security groups for port 22 (SSH) or 3389 (RDP) open to 0.0.0.0/0. These open ports allow brute force attacks from anywhere on the internet.
+
+## Lambda Functions
+
+The application uses four Lambda functions:
+
+- **discover_ec2_lambda** — Triggered by GET /instances endpoint. Calls AWS DescribeInstances API and returns EC2 instance data including instance IDs, types, public IPs, and security groups.
+
+- **discover_s3_lambda** — Triggered by GET /buckets endpoint. Calls AWS ListBuckets API and returns S3 bucket information including bucket names and creation dates.
+
+- **cis_checks_lambda** — Triggered by POST /scan endpoint. Runs all 6 security checks against AWS resources and saves the results to DynamoDB for historical tracking.
+
+- **get_results_lambda** — Triggered by GET /cis-results endpoint. Reads the latest scan results from DynamoDB and returns them to the dashboard.
 
 ## API Endpoints
 
-GET /instances  
-Returns discovered EC2 instances.
+The REST API provides the following endpoints:
 
-GET /buckets  
-Returns discovered S3 buckets.
+- **GET /instances** — Returns discovered EC2 instances with their configuration details.
 
-GET /cis-results  
-Returns stored CIS scan results.
+- **GET /buckets** — Returns discovered S3 buckets with creation dates.
 
-POST /scan  
-Triggers a new CIS security scan.
+- **GET /cis-results** — Returns latest CIS scan results from DynamoDB including summary statistics.
+
+- **POST /scan** — Triggers a new security scan that runs all 6 checks and stores results.
+
+All responses include `Access-Control-Allow-Origin: *` header for CORS.
+
+## DynamoDB Schema
+
+The application uses a DynamoDB table named `scan_results` with the following attributes:
+
+- **resource_id** (String, Partition Key) — Unique identifier for the resource being checked, for example `cloud-scanner-test-bucket-123`.
+
+- **resource_type** (String) — Type of AWS resource such as `S3`, `IAM`, `CloudTrail`, or `SecurityGroup`.
+
+- **check_name** (String) — Name of the security check being performed, like `S3 Encryption` or `S3 Public Access`.
+
+- **status** (String) — Result of the check, can be `PASS`, `FAIL`, or `ERROR`.
+
+- **evidence** (String) — Detailed information about the check result, for example `Server-side encryption enabled: AES256`.
+
+- **timestamp** (String) — ISO 8601 timestamp of when the check was performed, such as `2026-03-09T08:30:29.000Z`.
+
+## IAM Permissions Required
+
+The Lambda execution role (`CloudScannerLambdaRole`) needs the following AWS managed policies:
+
+- **AmazonEC2ReadOnlyAccess** — To discover and read EC2 instance information.
+
+- **AmazonS3FullAccess** — To list buckets and check bucket configurations like encryption, versioning, and public access settings.
+
+- **AmazonDynamoDBFullAccess** — To read and write scan results to the DynamoDB table.
+
+- **IAMReadOnlyAccess** — To check IAM configuration including root account MFA status.
+
+- **AWSCloudTrailFullAccess** — To verify if CloudTrail is enabled for the account.
 
 ## Deployment Steps
 
-1. Create DynamoDB table `scan_results`
-2. Deploy Lambda functions
-3. Configure API Gateway routes
-4. Enable CORS
-5. Open `frontend/index.html`
+1. **DynamoDB** — Create table `scan_results` with `resource_id` (String) as partition key.
 
-## Demo
+2. **Lambda** — Deploy all 4 Lambda functions using Node.js 18.x runtime with ES Module format (`.mjs` extension).
 
-Dashboard displays:
-- EC2 instances
-- S3 buckets
-- CIS security results
+3. **IAM Role** — Attach the required AWS managed policies to the Lambda execution role.
+
+4. **Timeout** — Set Lambda timeout to 30 seconds since the default 3 seconds is too short for running all 6 checks.
+
+5. **API Gateway** — Create REST API, configure routes for all endpoints, and enable CORS on all endpoints.
+
+6. **Frontend** — Update `API_BASE` in `app.js` with your API Gateway URL, then open `index.html` in a browser.
+
+## Frontend
+
+The dashboard consists of three files (`index.html`, `style.css`, and `app.js`) and provides:
+
+- **Live EC2 instances table** — Displays instance ID, type, public IP, and associated security groups.
+
+- **S3 buckets table** — Shows bucket names and creation dates.
+
+- **CIS security results table** — Presents the results of all security checks with PASS/FAIL status, evidence details, and timestamps.
