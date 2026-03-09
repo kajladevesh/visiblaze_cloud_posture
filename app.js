@@ -1,5 +1,5 @@
 
-const API_BASE = "https://d6yuohmtl7.execute-api.us-east-1.amazonaws.com/dev"
+const API_BASE = CONFIG.API_BASE
 
 function showStatus(message, type) {
   const statusEl = document.getElementById("statusMsg")
