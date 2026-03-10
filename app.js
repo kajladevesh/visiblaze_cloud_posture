@@ -39,7 +39,6 @@ async function loadInstances() {
     instances.forEach(function(instance) {
       const securityGroupNames = instance.securityGroups
         .map(function(group) { return group.GroupName })
-        .join(", ")
 
       const row = document.createElement("tr")
       row.innerHTML =
@@ -115,16 +114,6 @@ async function loadCIS() {
     const parsed = parseResponse(data)
 
     const results = parsed.results || parsed
-    const summary = parsed.summary || null
-
-    if (summary) {
-      const t = document.getElementById("totalCount")
-      const p = document.getElementById("passCount")
-      const f = document.getElementById("failCount")
-      if (t) t.textContent = summary.total
-      if (p) p.textContent = summary.passed
-      if (f) f.textContent = summary.failed
-    }
 
     const tableBody = document.querySelector("#cisTable tbody")
     tableBody.innerHTML = ""
@@ -141,8 +130,11 @@ async function loadCIS() {
                         : "status-error"
 
       const formattedDate = new Date(result.timestamp).toLocaleString("en-IN", {
-        day: "numeric", month: "short", year: "numeric",
-        hour: "2-digit", minute: "2-digit"
+        day: "numeric", 
+        month: "short", 
+        year: "numeric",
+        hour: "2-digit", 
+        minute: "2-digit"
       })
 
       const row = document.createElement("tr")
@@ -171,7 +163,7 @@ async function runScan() {
   button.disabled = true
   button.textContent = "Scanning..."
 
-  showStatus("Running security scan... please wait", "loading")
+  showStatus("Running security scan... ", "loading")
 
   try {
 

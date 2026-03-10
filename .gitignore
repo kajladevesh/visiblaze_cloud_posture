@@ -1,5 +1,7 @@
 config.js
 cis_check.mjs
 get_result.mjs
+discover_ec2_lambda.js
+discover_s3_lambda.js
 .DS_Store
 node_modules/
